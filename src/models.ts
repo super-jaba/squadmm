@@ -6,9 +6,6 @@ export type RoleStatus = z.infer<typeof RoleStatus>
 export const RolePriority = z.enum(['Low', 'Medium', 'High', 'Critical'])
 export type RolePriority = z.infer<typeof RolePriority>
 
-export const RoleType = z.enum(['Remote', 'Hybrid', 'In-person'])
-export type RoleType = z.infer<typeof RoleType>
-
 // Row of public."Role". Unknown columns (airtable/whalesync sync fields etc.) are stripped,
 // so `SELECT *` parses fine.
 export const Role = z.object({
@@ -19,12 +16,7 @@ export const Role = z.object({
   statusInternal: RoleStatus.nullable(),
   rolePriority: RolePriority.nullable(),
   isAcceptingNewSubmissions: z.boolean().nullable(),
-  // Comma-separated in the DB, e.g. "Remote, Hybrid"
-  roleType: z
-    .string()
-    .nullable()
-    .transform((s) => (s ? s.split(',').map((t) => t.trim()) : []))
-    .pipe(z.array(RoleType)),
+  roleType: z.string().nullable(), // comma-separated, e.g. "Remote, Hybrid"
   skills_fk_Skill: z.array(z.string()),
   keyIndicators: z.array(z.string()),
   requiredLocation: z.string().nullable(),
