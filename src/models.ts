@@ -33,3 +33,18 @@ export const Role = z.object({
 })
 
 export type Role = z.infer<typeof Role>
+
+export const MatchStrength = z.enum(['STRONG', 'MEDIUM', 'WEAK'])
+export type MatchStrength = z.infer<typeof MatchStrength>
+
+// Row of public."Match"
+export const Match = z.object({
+  id: z.string(),
+  roleId: z.string(),
+  userId: z.string(), // recruiter
+  createdAt: z.date(),
+  reasoning: z.string().nullable(), // free text
+  strength: MatchStrength,
+})
+
+export type Match = z.infer<typeof Match>

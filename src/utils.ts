@@ -1,6 +1,6 @@
 import { settings } from './config.js'
 import { query } from './db.js'
-import type { Role } from './models.js'
+import { Match, type MatchStrength, type Role } from './models.js'
 
 // Function checking the role is worth working out
 export function worthConsidering(role: Role): boolean {
@@ -50,7 +50,17 @@ export function findRecruiters(role: Role): string[] {
   return rows.map((r) => r.id)
 }
 
-// Compute match between a recruiter and a role
-export function match(roleId: string, recruiterId: string): number {
-  throw new Error('Not implemented')
+// Compute match between a recruiter and a role and store it.
+// Returns null if this recruiter was already matched to the role.
+export function match(roleId: string, recruiterId: string): Match | null {
+  // TODO: real scoring; every match is STRONG for now
+  const strength: MatchStrength = 'STRONG'
+  const [row] = query(
+    `INSERT INTO "Match" ("roleId", "userId", strength)
+     VALUES ($1, $2, $3)
+     ON CONFLICT ("roleId", "userId") DO NOTHING
+     RETURNING *`,
+    [roleId, recruiterId, strength],
+  )
+  return row ? Match.parse(row) : null
 }
