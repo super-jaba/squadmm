@@ -6,6 +6,8 @@ if (existsSync('.env')) process.loadEnvFile()
 
 const Settings = z.object({
   DB_URL: z.url().default('postgres://squad:squad@localhost:5432/squad'),
+  // Recruiter payout rate when no RateAdjustment exists; matches the 9% shown in the dashboard
+  DEFAULT_RATE_PERCENT: z.coerce.number().positive().default(9),
 })
 
 export type Settings = z.infer<typeof Settings>
