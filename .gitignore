@@ -28,6 +28,9 @@ coverage/
 .eslintcache
 .npm/
 
+# Database dump & setup guide
+dbsetup/
+
 # Editors / OS
 .vscode/*
 !.vscode/extensions.json
