@@ -21,5 +21,12 @@
   "devDependencies": {
     "@types/node": "^26.6.5",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "pg-native": "^3.9.1",
+    "zod": "^4.6.7"
+  },
+  "allowScripts": {
+    "libpq@1.11.0": true
   }
 }
