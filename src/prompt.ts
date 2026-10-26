@@ -1,7 +1,7 @@
 import type { HistoryRole, RecruiterContext, RoleCard } from './context.js'
 
 // Bump when the prompt changes; stored on each Match so stale matches can be found and rerun
-export const PROMPT_VERSION = 'v3'
+export const PROMPT_VERSION = 'v4'
 
 export const SYSTEM_PROMPT = `You match freelance tech recruiters to open roles on Squad, a hiring marketplace. Recruiters earn a commission when their candidate is hired, and they choose which roles to "work out" (actively source for). Judge whether THIS recruiter would want to work this role AND is likely to succeed at it. Base your judgment only on the data provided. Never invent facts.
 
@@ -10,6 +10,8 @@ Signals, strongest first:
 2. Choices (RECENTLY SAVED, and RECENTLY WORKED with outcome "self-submitted"): current interest.
 3. Stated preferences (role types, locations, specialties, free text). If preferencesAskedFromRecruiter is false, treat these as weak hints.
 Judge similarity semantically (e.g. "Solidity smart-contract engineer" and "DeFi protocol engineer" are the same niche). Recent history reflects current focus.
+
+A history section is omitted when the recruiter has no such history. Treat a missing section as unknown, not as a negative signal. With no RECENTLY WORKED, ability is unknown, so the match is at most MEDIUM. With neither history section, judge on stated preferences alone: MEDIUM only if the preferences clearly name this niche (specialties or free text) and don't conflict; otherwise WEAK.
 
 A "closely similar" role is in the same niche AND shares the core skills or stack of this role. Same job family alone (e.g. any backend role) is only adjacent.
 
@@ -62,12 +64,9 @@ export function buildUserPrompt(role: RoleCard, ctx: RecruiterContext): Prompt {
     `  specialties: ${list(prefs.specialties)}`,
     `  free text: ${prefs.freeText ?? '—'}`,
     `  preferencesAskedFromRecruiter: ${prefs.asked}`,
-    '',
-    'RECENTLY SAVED (newest first):',
-    ...items(saved),
-    '',
-    'RECENTLY WORKED (newest first):',
-    ...items(worked),
+    // Empty history sections are left out entirely
+    ...(saved.length ? ['', 'RECENTLY SAVED (newest first):', ...items(saved)] : []),
+    ...(worked.length ? ['', 'RECENTLY WORKED (newest first):', ...items(worked)] : []),
   ]
 
   return {
@@ -85,7 +84,7 @@ function companyLabel(name: string | null, segment: string | null): string {
 }
 
 function items(entries: (readonly [string, string])[]): string[] {
-  return entries.length ? entries.map(([id, text]) => `  ${id}: ${text}`) : ['  (none)']
+  return entries.map(([id, text]) => `  ${id}: ${text}`)
 }
 
 function list(values: (string | null | undefined | false)[]): string {

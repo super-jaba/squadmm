@@ -1,7 +1,7 @@
 import { settings } from './config.js'
 import { loadRecruiterContext, loadRoleCard } from './context.js'
 import { pgArray, query } from './db.js'
-import { hasNoSignal, judge } from './judge.js'
+import { hasNoSignal, judge, missingDataPrefix } from './judge.js'
 import { Match, type Role } from './models.js'
 import { buildUserPrompt, PROMPT_VERSION } from './prompt.js'
 
@@ -68,6 +68,8 @@ export async function match(roleId: string, recruiterId: string, { dryRun = fals
   if (dryRun) {
     console.log(`\n=== role ${roleId} × recruiter ${recruiterId}`)
     console.log(hasNoSignal(context) ? '(no signal: WEAK without an LLM call)' : buildUserPrompt(role, context).user)
+    const prefix = missingDataPrefix(context)
+    if (prefix) console.log(`reasoning prefix: ${prefix.trimEnd()}`)
     return null
   }
 

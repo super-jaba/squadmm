@@ -52,10 +52,17 @@ export function hasNoSignal(ctx: RecruiterContext): boolean {
   )
 }
 
+// Labels for history the judge didn't get, prepended to the reasoning
+export function missingDataPrefix(ctx: RecruiterContext): string {
+  const tags = [ctx.worked.length === 0 && 'NO APPLICATIONS', ctx.saved.length === 0 && 'NO SAVED JOBS'].filter(Boolean)
+  return tags.map((t) => `${t}. `).join('')
+}
+
 // Returns null when the LLM call fails (after retries) or returns an invalid answer.
 export async function judge(role: RoleCard, ctx: RecruiterContext): Promise<Judgment | null> {
+  const prefix = missingDataPrefix(ctx)
   if (hasNoSignal(ctx)) {
-    return { strength: 'WEAK', reasoning: 'Not enough information about this recruiter yet.', evidence: [], model: null }
+    return { strength: 'WEAK', reasoning: `${prefix}Not enough information about this recruiter yet.`, evidence: [], model: null }
   }
 
   const prompt = buildUserPrompt(role, ctx)
@@ -81,7 +88,7 @@ export async function judge(role: RoleCard, ctx: RecruiterContext): Promise<Judg
     const answer = JudgeResponse.parse(JSON.parse(choice.message.content))
     return {
       strength: answer.strength,
-      reasoning: answer.reasoning,
+      reasoning: prefix + answer.reasoning,
       evidence: answer.evidence.filter((id) => prompt.evidenceIds.has(id)), // drop ids it made up
       model: completion.model,
     }
