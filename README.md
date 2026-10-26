@@ -34,6 +34,7 @@ npm run build
 | `OPENAI_API_KEY` | — | Required for real runs (not for `--dry-run` or `recruiter`) |
 | `OPENAI_MODEL` | `gpt-4.1-mini` | Must support strict JSON-schema output and `temperature: 0` |
 | `MATCH_CONCURRENCY` | `5` | Recruiters judged in parallel per role |
+| `PORT` | `3000` | Web UI port |
 
 ## CLI
 
@@ -47,6 +48,14 @@ node dist/index.js role <roleId> --dry-run
 ```
 
 Re-running a role refreshes its existing matches; it never creates duplicates.
+
+## Web UI
+
+```bash
+npm run web   # builds, then serves http://localhost:3000 (PORT=4000 npm run web to change)
+```
+
+A read-only view of the database: browse recruiters (searchable by name or email), open one to see their profile, stated preferences and matches, and filter the matches by strength. `/matches` lists every match, sortable by strength; clicking one opens its recruiter. On a recruiter page, clicking a match opens the full role (details, requirements, job description) in a new tab.
 
 ## How matching works
 

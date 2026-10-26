@@ -12,7 +12,7 @@ const ADVANCED = `(ca."stageWithClient" ~ '(2nd|3rd|4th|Final|Negotiation|Placed
   OR ca."internalStatus" IN ('Placed', 'Accepted by client'))`
 
 // Skill names of role r
-const SKILL_NAMES = `ARRAY(SELECT s.name FROM "Skill" s WHERE s.id = ANY(r."skills_fk_Skill") ORDER BY s.name)`
+export const SKILL_NAMES = `ARRAY(SELECT s.name FROM "Skill" s WHERE s.id = ANY(r."skills_fk_Skill") ORDER BY s.name)`
 
 export type RoleCard = {
   id: string

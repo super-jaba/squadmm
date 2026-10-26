@@ -15,6 +15,8 @@ const Settings = z.object({
   OPENAI_MODEL: z.string().min(1).default('gpt-4.1-mini'),
   // Recruiters judged in parallel per role
   MATCH_CONCURRENCY: z.coerce.number().int().positive().default(5),
+  // Web UI (src/server.ts)
+  PORT: z.coerce.number().int().positive().default(3000),
 })
 
 export type Settings = z.infer<typeof Settings>
