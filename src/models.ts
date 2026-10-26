@@ -45,6 +45,10 @@ export const Match = z.object({
   createdAt: z.date(),
   reasoning: z.string().nullable(), // free text
   strength: MatchStrength,
+  evidence: z.array(z.string()).nullable(), // history item ids the judge cited, e.g. "S2", "A1"
+  model: z.string().nullable(), // null when decided without an LLM call
+  promptVersion: z.string().nullable(),
+  updatedAt: z.date().nullable(),
 })
 
 export type Match = z.infer<typeof Match>

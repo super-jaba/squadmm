@@ -1,6 +1,9 @@
 import { settings } from './config.js'
-import { query } from './db.js'
-import { Match, type MatchStrength, type Role } from './models.js'
+import { loadRecruiterContext, loadRoleCard } from './context.js'
+import { pgArray, query } from './db.js'
+import { hasNoSignal, judge } from './judge.js'
+import { Match, type Role } from './models.js'
+import { buildUserPrompt, PROMPT_VERSION } from './prompt.js'
 
 // Function checking the role is worth working out
 export function worthConsidering(role: Role): boolean {
@@ -50,17 +53,41 @@ export function findRecruiters(role: Role): string[] {
   return rows.map((r) => r.id)
 }
 
-// Compute match between a recruiter and a role and store it.
-// Returns null if this recruiter was already matched to the role.
-export function match(roleId: string, recruiterId: string): Match | null {
-  // TODO: real scoring; every match is STRONG for now
-  const strength: MatchStrength = 'STRONG'
+export type MatchOptions = {
+  dryRun?: boolean // print the prompt instead of calling the LLM; nothing is stored
+}
+
+// Judge how well a recruiter fits a role and store the match (reruns refresh it).
+// Returns null when nothing was stored: dry run, unknown role, or the judge failed.
+export async function match(roleId: string, recruiterId: string, { dryRun = false }: MatchOptions = {}): Promise<Match | null> {
+  // 1. Build context: the role card and what we know about the recruiter
+  const role = loadRoleCard(roleId)
+  if (!role) return null
+  const context = loadRecruiterContext(recruiterId, role)
+
+  if (dryRun) {
+    console.log(`\n=== role ${roleId} × recruiter ${recruiterId}`)
+    console.log(hasNoSignal(context) ? '(no signal: WEAK without an LLM call)' : buildUserPrompt(role, context).user)
+    return null
+  }
+
+  // 2. Ask the LLM judge
+  const judgment = await judge(role, context)
+  if (!judgment) return null
+
+  // 3. Upsert
   const [row] = query(
-    `INSERT INTO "Match" ("roleId", "userId", strength)
-     VALUES ($1, $2, $3)
-     ON CONFLICT ("roleId", "userId") DO NOTHING
+    `INSERT INTO "Match" ("roleId", "userId", strength, reasoning, evidence, model, "promptVersion", "updatedAt")
+     VALUES ($1, $2, $3, $4, $5::text[], $6, $7, CURRENT_TIMESTAMP)
+     ON CONFLICT ("roleId", "userId") DO UPDATE SET
+       strength = EXCLUDED.strength,
+       reasoning = EXCLUDED.reasoning,
+       evidence = EXCLUDED.evidence,
+       model = EXCLUDED.model,
+       "promptVersion" = EXCLUDED."promptVersion",
+       "updatedAt" = EXCLUDED."updatedAt"
      RETURNING *`,
-    [roleId, recruiterId, strength],
+    [roleId, recruiterId, judgment.strength, judgment.reasoning, pgArray(judgment.evidence), judgment.model, PROMPT_VERSION],
   )
   return row ? Match.parse(row) : null
 }
